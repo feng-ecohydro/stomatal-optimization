@@ -22,7 +22,7 @@ s1, ps1, gc1, net_gain1, E1 = simf_full_refill(eller, s0=s0, duration=duration, 
 
 # simulation using stomatal conductance function based on long-term, dynamic feedback optimization 
 a, b, c = optimize_gs_drydown(simf_full_refill, s0, duration)['params'].values()
-gs_dynfb = lambda ps: min(a*np.exp(-(ps/c)**b)-gs_min, gcmaxf(ps))
+gs_dynfb = lambda ps, p50, pL, pk, k_func: min(a*np.exp(-(ps/c)**b)-gs_min, gcmaxf(ps))
 s2, ps2, gc2, net_gain2, E2 = simf_full_refill(gs_dynfb, s0=s0, duration=duration, output_option='All')
 
 #%% 

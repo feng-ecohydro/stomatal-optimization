@@ -6,7 +6,7 @@ Created on Sat Jun 26 16:01:27 2021
 @author: xuefeng
 """
 
-from optimization_functions import simf_no_embolism, eller, optimize_gs_drydown, gs_min, gcmaxf
+from optimization_functions import simf_full_refill, eller, optimize_gs_drydown, gs_min, gcmaxf
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,12 +36,12 @@ if rerun:
             print('Init soil moisture s0:', round(s0,1), 'Dry down duration (days):, ', dura)
             
             # Compares averaged net gain instead of cumulative net gain, in umol m-2 s-1
-            _, _, _, net_gain1, _ = simf_no_embolism(eller, s0=s0, duration=dura, output_option='All')
+            _, _, _, net_gain1, _ = simf_full_refill(eller, s0=s0, duration=dura, output_option='All')
             Cnet_eller[i,j] = np.mean(net_gain1)
             
-            a, b, c = optimize_gs_drydown(simf_no_embolism, s0=s0, duration=dura)['params'].values()
-            gs_dynfb = lambda ps: min(a*np.exp(-(ps/c)**b)-gs_min, gcmaxf(ps))
-            _, _, _, net_gain2, _ = simf_no_embolism(gs_dynfb, s0=s0, duration=dura, output_option='All')
+            a, b, c = optimize_gs_drydown(simf_full_refill, s0=s0, duration=dura)['params'].values()
+            gs_dynfb = lambda ps, p50, pL, pk, k_func: min(a*np.exp(-(ps/c)**b)-gs_min, gcmaxf(ps))
+            _, _, _, net_gain2, _ = simf_full_refill(gs_dynfb, s0=s0, duration=dura, output_option='All')
             Cnet_dynfb[i,j] = np.mean(net_gain2)  
 
     # Create dataframe as repository of results            
