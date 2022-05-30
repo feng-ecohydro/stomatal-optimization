@@ -10,8 +10,8 @@ rerun = True
 column_names = ['net_gain', 'PLC', 's', 'pl']
 
 # optimization parameters 
-s0 = 0.5            # initial soil moisture
-duration = 100      # days, dry down duration 
+s0 = 0.3            # initial soil moisture
+duration = 30      # days, dry down duration 
 pk = 0.5            # percent recovery 
 p50_1 = -1            # plant water potential at 50% loss of max conductivity 
 p50_2 = -2            # plant water potential at 50% loss of max conductivity 
@@ -95,5 +95,5 @@ ax.text(0.05, 0.95, 'c', transform=ax.transAxes,
       fontsize=16, fontweight='bold', va='top')
 
 plt.tight_layout()
-plt.savefig('./Figures/Figure_4.png', dpi=300)
+# plt.savefig('./Figures/Figure_4.png', dpi=300)
 plt.show()

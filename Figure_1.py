@@ -3,10 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #%% 
-
 # Simulation parameters 
-s0 = 0.3            # -, initial relative soil moisture
-duration = 100      # days, duration of simulation
+save = False
+s0 = 0.3           # -, initial relative soil moisture
+duration = 30      # days, duration of simulation
 mumol = 10**6       # umol/mol, converstion factor
 
 # Figure parameters 
@@ -58,7 +58,8 @@ plt.ylabel('Relative soil moisture (-) ')
 ax.text(0.85, 0.95, 'c', transform=ax.transAxes, fontsize=16, fontweight='bold', va='top')
 
 plt.tight_layout()
-plt.savefig('./Figures/Figure_1.png', dpi=300)
+if save:
+    plt.savefig('./Figures/Figure_1.png', dpi=300)
 plt.show()
 
  

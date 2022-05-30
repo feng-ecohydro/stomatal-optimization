@@ -45,43 +45,44 @@ p_min = -1e4        # MPa, lower bound for water potential during minimization
 # Conversion constants 
 
 l = 1.8*10**-5      # m3/mol of water
-dt = 8*60*60        # sec/day, photosynthetically active period during the day
-LAI = 1             # m2 leaf area / m2 ground area, used to scale ET between plant and soil moisture models
+dt = 10*60*60       # sec/day, photosynthetically active period during the day
 diy = 365           # days, number of days in year
 Mmm = 0.001         # m/mm, meters in mm
 
 # Soil moisture and water retention parameters
-# Defaul parameter values for loamy sand, from Laio et al. (2001), Table 1
+# Defaul parameter values for sandy loam, from Laio et al. (2001), Table 1
 
-n = 0.43            # -, soil porosity
-Z = 0.5             # m, effective rooting depth 
-pe = -0.17*10**(-3) # MPa, soil water potential near saturation
-beta = 4.38         # -, nonlinear parameter in soil water retention curve
+n = 0.38            # -, soil porosity
+Z = 0.1            # m, effective rooting depth 
+pe = -1.5*10**(-3) # MPa, soil water potential near saturation
+beta = 3.1       # -, nonlinear parameter in soil water retention curve
 
-# Vulnerability curve parameters
+# Plant and vulnerability curve parameters
 
-kmax = 0.01         # mol m-2 s-1 MPa-1, maximum hydraulic conductivity
-p50= -1             # MPa, plant water potential at 50% loss in hydraulic conductivity
+LAI = 0.17          # m2 leaf area / m2 ground area, used to scale ET between plant and soil moisture models
+kmax = 0.015        # mol m-2 s-1 MPa-1, maximum hydraulic conductivity
+p50= -1.22          # MPa, plant water potential at 50% loss in hydraulic conductivity
 pk = 1              # percent recovery of embolism xylem conductivity, after Lu et al. (2020) - defaults to complete recovery
 
 # Atmospheric constants
 
 a_ratio = 1.6       # water to air ratio
-D = 0.01            # mol/mol, VPD
-Patm = 101325       # Pa, atmospheric pressure
-ca= 40              # ppm, atmospheric CO2 concentration 
+D = 0.03            # mol mol-1, leaf to air vapour pressure deficit 
+Patm = 90000       # Pa, atmospheric pressure
+ca= 40              # Pa, CO2 partial pressure 
+Oa = 21000          # Pa, O2 partial pressure
 
 # Photosynthesis parameters - default values from Eller et al. (2018), Table 1
+# from Venturas (2018)... Vmax = 120 µmol m−2 s−1 and Jmax = 160 µmol m−2 s−1 at a leaf temperature of 25 degrees celsius.
 
 IPAR = 0.002        # mol m-2 s-1, incident photosynthetically active radiation
-Tc = 20             # C, air temperature
-Oa = 21000          # mol mol-1, air oxygen concentration
-Vcmax25 = 0.0001    # mol m-2 s-1, maximum Rubisco carboxylation rate at 25C
-Tup = 50            # C, high temperature photosynthesis range
+Vcmax25 = 0.00012    # mol m-2 s-1, maximum Rubisco carboxylation rate at 25C
+Tref = 25           # C, reference leaf temperature 
+Tc = 28.7             # C, air temperature
+Tup = 40            # C, high temperature photosynthesis range
 Tlw = 10            # C, low temperature photosynthesis range
 alfa = 0.1          # mol mol-1, quantum efficiency
 wPAR = 0.15         # -, leaf scattering coefficient
-Tref = 25           # C, reference leaf temperature 
 
 # Photosynthesis parameters - default values from Clark et al. (2011) and Eller et al. (2018)
 
@@ -89,6 +90,12 @@ Q10leaf = 2         # Q10 factor for leaf
 Q10rs = 0.57        # Q10 factor for CO2 compensation point (Gamma)
 Q10Kc = 2.1         # Q10 factor for Michaelis-Menton constant for CO2
 Q10Ko = 1.2         # Q10 factor for Michaelis-Menton constant for O2
+
+
+
+# sensitivity analysis
+D = 0.015
+IPAR = 0.001
 
 #%%
 ''' HELPER FUNCTIONS (PHOTOSYNTHESIS, EVAPOTRANSPIRATION, NET CARBON GAIN) ''' 
@@ -160,11 +167,13 @@ def Acif(ci):
 
 def Agcf(gc, ci):
     # assimilation, mol m-2 s-1
+    # gc, stomatal conductance, mol m-2 s-1
     
     return gc*(ca-ci)/Patm
 
 def Af(gc):
     # find equilibrium internal CO2 concentration to match assimilation (Acif and Agcf)
+    # gc, stomatal conductance, mol m-2 s-1
     
     f1 = lambda ci: Acif(ci)-Agcf(gc, ci)
     ci = optimize.brentq(f1, 0, ca)                                     
@@ -193,6 +202,7 @@ def pminf(ps, p50=p50, pL=0, pk=1, k_func=kf):
     # find plant water potential that yields maximum water supply 
     # pL, pk, and k_func passed onto ET supply function 
     
+    ps = max(ps, p_min) # ensures that soil water potential does not go below p_min
     f1 = lambda p: -Epf(p, ps, p50, pL, pk, k_func)
     p = optimize.minimize_scalar(f1, bounds=(p_min, ps), method='bounded').x 
     return p
@@ -271,8 +281,8 @@ def simf_full_refill(gs_func, s0, duration, output_option, p50=p50, pk=pk):
     s[0] = s0
     
     for i in range(duration):
-        ps[i] = psf(s[i])
-        gc[i] = gs_func(ps[i])
+        ps[i] = psf(s[i]) 
+        gc[i] = gs_func(ps[i], p50=p50, pL=0, pk=1, k_func=kf)
         net_gain[i] = net_gainf(gc[i], ps[i]) 
         E[i] = Egcf(gc[i])*dt*l*LAI / (n*Z)      
         s[i+1] = max(0, s[i]-E[i])
@@ -406,7 +416,7 @@ def objective_function_dynfb(a, b, c, gamma, freq):
     
     # find expected carbon gain given stomatal conductance and soil moisture pdf
     res = expected_gain(pdf, gcpsf, s_min)
-    if np.isnan(res): res = 0
+    if np.isnan(res) or np.isinf(res): res = 0
     return res
 
 def objective_function_eller(climate_param):
@@ -447,7 +457,7 @@ def optimize_gs_stochastic(climate_param):
     optimizer = BayesianOptimization(
         f=objf_wrapper,
         pbounds=pbounds,
-        verbose=0,
+        verbose=1,
         random_state=1,
         )
     

@@ -14,10 +14,11 @@ import pandas as pd
 #%%
 
 # Optimization parameters
-rerun = 1                               # rerun optimization, can set to 0 if file has already been saved
+rerun = 0                               # rerun optimization, can set to 0 if file has already been saved
+save = 0                                # save figure after run
 file_name = 'Cnet_dynfb_vs_instant.csv'
-s0_arr = np.arange(0.3, 1.01, 0.1)      # range of intitial soil moisture conditions
-dura_arr = np.arange(10, 151, 20)       # range of dry-down durations
+s0_arr = np.round(np.arange(0.1, 0.61, 0.1).tolist(), 2)      # range of intitial soil moisture conditions
+dura_arr = np.arange(10, 91, 10)       # range of dry-down durations
 
 # Plotting parameters 
 col = 'firebrick'           # color for dynamic feedback optimization 
@@ -78,7 +79,6 @@ plt.plot(s0_arr, df[df.duration==30]['Cnet_dynfb'] * mumol, color=col, label='Dy
 plt.xlabel('Initial relative soil moisture (-) ')
 plt.ylabel('Mean net carbon gain rate ($\mathrm{\mu mol\ m^{-2} s^{-1}}$)')
 ax.text(0.05, 0.95, 'a', transform=ax.transAxes, fontsize=14, fontweight='bold', va='top')
-plt.legend()
 
 ax = plt.subplot(132)
 plt.plot(dura_arr, df[np.isclose(df.s0.values, 0.6)]['Cnet_eller'] * mumol, '--', color=col2, label='Instantaneous')
@@ -86,6 +86,7 @@ plt.plot(dura_arr, df[np.isclose(df.s0.values, 0.6)]['Cnet_dynfb'] * mumol, colo
 plt.xlabel(' Dry down duration (days) ')
 plt.ylabel('Mean net carbon gain rate ($\mathrm{\mu mol\ m^{-2} s^{-1}}$)')
 ax.text(0.05, 0.95, 'b', transform=ax.transAxes, fontsize=14, fontweight='bold', va='top')
+plt.legend()
 
 ax = plt.subplot(133)
 CS = ax.contour(X,Y,z, n_contours, cmap='binary')
@@ -96,6 +97,7 @@ plt.clabel(CS)
 ax.text(0.05, 0.95, 'c', transform=ax.transAxes, fontsize=14, fontweight='bold', va='top')
 
 plt.tight_layout()
-plt.savefig('./Figures/Figure_2.png', dpi=300)
+if save: 
+    plt.savefig('./Figures/Figure_2.png', dpi=300)
 plt.show()
 
