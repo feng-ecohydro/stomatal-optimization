@@ -13,7 +13,7 @@ import time
 
 #%% 
 # optimization parameters 
-file_name = '../expected_Cnet_eller_vs_dynfb.csv'
+file_name = './expected_Cnet_eller_vs_dynfb.csv'
 
 # if rerunning optimization from scratch
 rerun = False
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         df_eller_climate = df_climate.join(df_eller)
         df_eller_climate.to_csv(file_name)
         
-        df_eller_climate.to_csv('../expected_Cnet_eller.csv')
+        df_eller_climate.to_csv('./expected_Cnet_eller.csv')
         
         # for dynamic feedback optimization 
         print('Start dynamic feedback optimization for gs')
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         df_dynfb = pd.DataFrame([[r['target'], r['params']['a'], r['params']['b'], r['params']['c']] 
                             for r in result_dynfb], columns=['expected_Cnet_dynfb', 'a', 'b', 'c'])
         df_dynfb_climate = df_climate.join(df_dynfb)
-        df_dynfb_climate.to_csv('../expected_Cnet_dynfb.csv')
+        df_dynfb_climate.to_csv('./expected_Cnet_dynfb.csv')
         
         # combine both eller and dynfb results and save
         df_all = df_eller_climate.merge(df_dynfb_climate, on=['freq','MAP'], how='left')
